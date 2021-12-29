@@ -39,6 +39,7 @@ jobs:
             hadolint --ignore DL3003 --ignore DL3006 Dockerfile
             #make lint
             npx htmlhint "index.html"
+            
 # test EKS cluster
   test-cluster:
     executor: aws-eks/python3
