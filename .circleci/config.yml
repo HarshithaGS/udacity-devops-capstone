@@ -55,32 +55,9 @@ jobs:
             . venv/bin/activate
 
   create_and_publish_image:
-    docker:
-      - image: python:3.7.3-stretch
-      
-    working_directory: ~/udacity-devops-capstone
-    
+    machine: true
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}
-            
-      - setup_remote_docker:
-          version: 20.10.2
-          
-      - run:
-          name: Install Docker
-          command: |
-            apt-get update
-            apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-            curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-            add-apt-repository \
-            "deb [arch=amd64] https://download.docker.com/linux/debian \
-            $(lsb_release -cs) \
-            stable"
-            apt-get update
-            apt-get install -y docker-ce docker-ce-cli containerd.io
       - run:
           name: build docker container
           no_output_timeout: 5m
@@ -116,7 +93,7 @@ jobs:
       - run:
           name: Connect cluster
           command: |
-            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster 
+            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone
             kubectl get svc
       
       - run:
