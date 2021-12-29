@@ -82,17 +82,15 @@ jobs:
             apt-get update
             apt-get install -y docker-ce docker-ce-cli containerd.io
       - run:
-          name: Create and Publish image
+          name: build docker container
+          no_output_timeout: 50m
           command: |
-            docker build --tag capstone .
-            docker image ls
-            dockerpath=harshitha95/capstone
-            echo "Docker ID and Image: $dockerpath"
-            docker login --username ${DOCKER_USER} -p ${DOCKER_PASSWORD}
-            #echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            #docker push $IMAGE_NAME:latest
-            docker tag capstone $dockerpath
-            docker push $dockerpath:latest
+            ./run_docker.sh
+      - run:
+          name: upload docker container
+          no_output_timeout: 30m
+          command: |
+            ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
             
             
   Infrastructure_and_Deployment:
