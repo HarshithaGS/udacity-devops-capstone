@@ -13,8 +13,8 @@
 # Step 2:  
 # Authenticate & tag
 echo "Docker ID and Image: $dockerpath"
-#docker login --username sarastavaski
-docker login --username $1 --password $2
+#docker login --username harshitha95
+docker login --username $harshitha95 --password $Docker@1
 docker tag capstone $dockerpath
 # fixed login
 # Step 3:

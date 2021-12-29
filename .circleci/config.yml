@@ -83,12 +83,12 @@ jobs:
             apt-get install -y docker-ce docker-ce-cli containerd.io
       - run:
           name: build docker container
-          no_output_timeout: 10m
+          no_output_timeout: 5m
           command: |
             ./run_docker.sh
       - run:
           name: upload docker container
-          no_output_timeout: 5m
+          no_output_timeout: 3m
           command: |
             ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
             
