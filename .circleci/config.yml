@@ -37,21 +37,6 @@ jobs:
           paths:
             - ./venv
           key: v1-dependencies-{{ checksum "requirements.txt" }}
-  
-  security_check:  
-    docker:
-      - image: python:3.7.3-stretch
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}
-            - v1-dependencies-
-      - run:
-          name: Security scan
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
 
   create_and_publish_image:
     machine: true
@@ -104,12 +89,9 @@ workflows:
   cicd-pipeline:
     jobs:
       - build
-      - security_check:
-          requires:
-            - build
       - create_and_publish_image:
           requires:
-            - security_check
+            - build
       - Infrastructure_and_Deployment:
           requires:
             - create_and_publish_image
