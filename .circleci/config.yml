@@ -1,0 +1,151 @@
+version: 2
+
+orbs:
+  docker: circleci/docker@1.6.0
+  aws-eks: circleci/aws-eks@1.0.0
+  kubernetes: circleci/kubernetes@0.11.1
+  
+jobs:
+  build:
+    docker:
+      # Use the same Docker base as the project
+      - image: python:3.7.3-stretch
+    steps:
+      - checkout
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies- #fallback to using the latest cache if no exact match is found
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            make install
+            # Install hadolint
+            wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&
+            chmod +x /bin/hadolint
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      # run lint!
+      - run:
+          name: run lint
+          command: |
+            . venv/bin/activate
+            make lint 
+  
+  security_check:  
+    docker:
+      - image: python:3.7.3-stretch
+      
+    working_directory: ~/udacity-devops-capstone
+    
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+       
+      - run:
+          name: Security scan
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            safety check
+            
+  create_and_publish_image:
+    docker:
+      - image: python:3.7.3-stretch
+      
+    working_directory: ~/udacity-devops-capstone
+    
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            
+      - setup_remote_docker:
+          version: 20.10.2
+          
+      - run:
+          name: Install Docker
+          command: |
+            apt-get update
+            apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+            add-apt-repository \
+            "deb [arch=amd64] https://download.docker.com/linux/debian \
+            $(lsb_release -cs) \
+            stable"
+            apt-get update
+            apt-get install -y docker-ce docker-ce-cli containerd.io
+      - run:
+          name: Create and Publish image
+          command: |
+            docker build --tag capstone .
+            docker image ls
+            dockerpath=harshitha95/capstone
+            echo "Docker ID and Image: $dockerpath"
+            docker login --username ${DOCKER_USER} -p ${DOCKER_PASSWORD}
+            docker tag capstone $dockerpath
+            docker push $dockerpath
+            
+            
+  Infrastructure_and_Deployment:
+    docker:
+      - image: amazon/aws-cli
+      
+    working_directory: ~/udacity-devops-capstone
+    
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+      
+      - run: 
+          name: Install kubectl
+          command: |
+            yum install -y wget
+            wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+      
+      - run:
+          name: Connect cluster
+          command: |
+            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster 
+            kubectl get svc
+      
+      - run:
+          name: Deploy cluster and update image
+          command: |
+            kubectl apply -f cluster_def.yml 
+            kubectl get svc
+            kubectl get pods
+            
+      - run:
+          name: rollout deployment 
+          command: |
+            kubectl rollout status deployment.apps/cluster_def.yml
+            kubectl get all
+  
+workflows:
+  cicd-pipeline:
+    jobs:
+      - build
+      - security_check:
+          requires:
+            - build
+      - create_and_publish_image:
+          requires:
+            - security_check
+      - Infrastructure_and_Deployment:
+          requires:
+            - create_and_publish_image

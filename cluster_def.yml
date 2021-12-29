@@ -1,0 +1,42 @@
+# This file gives the EKS Cluster definition
+
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: uda-capstone
+spec:
+  selector:
+    matchLabels:
+      app: capstone
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: capstone
+    spec:
+      containers:
+      - name: udacity-capstone-website
+        image: harshitha95/capstone:v2
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: uda-capstone
+  labels:
+    app: uda-capstone
+spec:
+  type: LoadBalancer
+  selector:
+    app: capstone
+  ports:
+    - port: 8000
+      targetPort: 80
+      protocol: TCP
