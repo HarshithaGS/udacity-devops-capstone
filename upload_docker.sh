@@ -12,9 +12,10 @@ echo "Dockerpath: ${dockerpath}"
 # Step 2:  
 # Authenticate & tag
 echo "Docker ID and Image: $dockerpath"
-docker login --username "HarshithaGS" &&\
-  docker login --password "Docker@1"
-    docker tag capstone:latest $dockerpath:latest
+docker login --username $1 --password $2
+#docker login --username "HarshithaGS" &&\
+  #docker login --password "Docker@1"
+docker tag capstone:latest $dockerpath:latest
 
 
 # Step 3:
