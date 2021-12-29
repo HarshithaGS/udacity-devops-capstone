@@ -88,8 +88,8 @@ jobs:
             docker image ls
             dockerpath=harshitha95/capstone
             echo "Docker ID and Image: $dockerpath"
-            #docker login --username ${DOCKER_USER} -p ${DOCKER_PASSWORD}
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker login --username ${DOCKER_USER} -p ${DOCKER_PASSWORD}
+            #echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             #docker push $IMAGE_NAME:latest
             docker tag capstone $dockerpath
             docker push $dockerpath:latest
