@@ -13,10 +13,9 @@ setup:
 install:
 	# This should be run from inside a virtualenv
 	pip install --upgrade pip &&\
-		pip install -r requirements.txt &&\
-			# to install on macos you will need to change the installer to darwin install. You can check hadolint github to find the link
-			wget -O ./hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&\
-				chmod +x ./hadolint		
+		pip install -r requirements.txt
+	wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&\
+          chmod +x /bin/hadolintt		
 
 test:
 	# Additional, optional, tests could go here
