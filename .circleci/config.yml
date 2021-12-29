@@ -85,11 +85,13 @@ jobs:
           name: build docker container
           no_output_timeout: 50m
           command: |
+            chmod +x ./run_docker.sh
             ./run_docker.sh
       - run:
           name: upload docker container
           no_output_timeout: 30m
           command: |
+            chmod +x ./upload_docker.sh
             ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
             
             
