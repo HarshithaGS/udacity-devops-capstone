@@ -135,7 +135,7 @@ jobs:
           command: |
             kubectl rollout status deployment.apps/cluster_def.yml
             kubectl get all
-  
+            
 workflows:
   cicd-pipeline:
     jobs:
