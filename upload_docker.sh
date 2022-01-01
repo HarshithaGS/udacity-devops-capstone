@@ -5,18 +5,15 @@
 
 # Step 1:
 # Create dockerpath
-export dockerpath=harshitha95/capstone
+dockerpath=harshitha95/capstone
 #echo "Dockerpath: ${dockerpath}"
-
-
 
 # Step 2:  
 # Authenticate & tag
 echo "Docker ID and Image: $dockerpath"
-docker tag capstone:latest  harshitha95/capstone:latest
+docker login --username $1 --password $2
+docker tag capstone $dockerpath
 
 # Step 3:
 # Push image to a docker repository
 docker push harshitha95/capstone
-
-
