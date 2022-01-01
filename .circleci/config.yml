@@ -4,7 +4,6 @@ orbs:
   kubernetes: circleci/kubernetes@0.4.0 
   aws-eks: circleci/aws-eks@1.1.0
 
-
 jobs:
   # lint Dockerfile with hadolint
   # lint index.html with htmlhint
@@ -40,6 +39,7 @@ jobs:
             hadolint --ignore DL3003 --ignore DL3006 Dockerfile
             #make lint
             npx htmlhint "index.html"
+            
 # test EKS cluster
   test-cluster:
     executor: aws-eks/python3
@@ -64,12 +64,12 @@ jobs:
       - checkout
       - run:
           name: build docker container
-          no_output_timeout: 5m
+          no_output_timeout: 20m
           command: |
             ./run_docker.sh
       - run:
           name: upload docker container
-          #no_output_timeout: 3m
+          no_output_timeout: 15m
           command: |
             ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
             
