@@ -69,7 +69,7 @@ jobs:
             ./run_docker.sh
       - run:
           name: upload docker container
-          no_output_timeout: 3m
+          #no_output_timeout: 3m
           command: |
             ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
             

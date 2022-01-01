@@ -4,7 +4,7 @@ metadata:
   name: capstone-rolling-update
 spec:
   selector:
-    app: capstone-html-app
+    app: capstone
   ports:
     - port: 8000
       targetPort: 80

@@ -5,7 +5,7 @@
 
 # Step 1:
 # Create dockerpath
-dockerpath=harshitha95/capstone
+dockerpath=harshitha95/capstone:latest
 #echo "Dockerpath: ${dockerpath}"
 
 # Step 2:  
@@ -16,4 +16,4 @@ docker tag capstone $dockerpath
 
 # Step 3:
 # Push image to a docker repository
-docker push harshitha95/capstone
+docker push harshitha95/capstone:latest

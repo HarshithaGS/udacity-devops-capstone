@@ -3,21 +3,21 @@ kind: Deployment
 metadata:
   name: capstone-rolling-update
   labels: 
-    app: capstone-html-app
+    app: capstone
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: capstone-html-app
+      app: capstone
   template:
     metadata:
       labels:
-        app: capstone-html-app
+        app: capstone
         role: rolling-update
     spec:
       containers:
       - name: capstone-html-container
-        image: harshitha95/capstone
+        image: harshitha95/capstone:latest
         imagePullPolicy: "Always"
         ports:
         - containerPort: 80
@@ -31,4 +31,3 @@ spec:
       maxSurge: 1
       maxUnavailable: 1
 
-      
