@@ -4,79 +4,47 @@ orbs:
   kubernetes: circleci/kubernetes@0.4.0 
   aws-eks: circleci/aws-eks@1.1.0
 
-
-
 jobs:
-  # lint Dockerfile with hadolint
-  # lint index.html with htmlhint
   build:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.7.3-stretch #same docker base as the project
     steps:
       - checkout
-      - run: 
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            # make install
-            # Install hadolint
-            wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&\
-            chmod +x /bin/hadolint
-            apk add --update nodejs npm
-            apk add --update npm
-            # sudo apt update
-            # sudo apt upgrade
-            # sudo apt install nodejs
-            pip install --upgrade pip &&\
-            pip install nodejs
-            pip install npm
-            node -v
-            npm -v
-            npm install --save-dev htmlhint
-      - run: 
-          name: run lint
-          command: |
-            # . venv/bin/activate
-            hadolint --ignore DL3003 --ignore DL3006 Dockerfile
-            #make lint
-            npx htmlhint "index.html"
-            
-# test EKS cluster
-  test-cluster:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
-    steps:
-      - kubernetes/install
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
+      - restore_cache: #download and cache dependencies
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt"}}
+            - v1-dependencies- #fallback to using the latest cache if no exact match is found
       - run:
+          name: Install dependencies
           command: |
-            kubectl get services
-          name: Test cluster
-          
-  # build docker image 
-  build-push-docker:
+            python -m venv venv
+            . venv/bin/activate
+            make install
+            # Installing Hadolint
+            wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&
+            chmod +x /bin/hadolint 
+      - run:
+          name: Run lint
+          command: |
+            . venv/bin/activate
+            make lint
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt"}}
+
+create-upload-container:
     machine: true
     steps:
       - checkout
       - run:
-          name: build docker container
-          no_output_timeout: 50m
-          command: |
-            ./run_docker.sh
-      - run:
-          name: upload docker container
+          name: build and upload docker container
           no_output_timeout: 30m
           command: |
+            ./run_docker.sh
             ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
-            
-  # create kubernetes cluster 
-  create-small-cluster:
+
+create-cluster:
     executor: aws-eks/python3
     parameters:
       cluster-name:
@@ -112,30 +80,28 @@ jobs:
           ssh-access: false
           ssh-public-key: ''
 
-  # run service.yml to create load balancer 
-  service:
+test-cluster:
     executor: aws-eks/python3
     parameters:
       cluster-name:
         description: |
-          The name of the EKS cluster
+          Name of the EKS cluster
         type: string
     steps:
-      - checkout
+      - kubernetes/install
       - aws-eks/update-kubeconfig-with-authenticator:
           cluster-name: << parameters.cluster-name >>
-          install-kubectl: true
-      - kubernetes/create-or-update-resource:
-          resource-file-path: service.yml
-          resource-name: deployment/capstone-rolling-update
+      - run:
+          command: |
+            kubectl get services
+          name: Test cluster
 
-  # run deployment.yml to create rolling update deployment
-  deployment:
+deployment:
     executor: aws-eks/python3
     parameters:
       cluster-name:
         description: |
-          The name of the EKS cluster
+          Name of the EKS cluster
         type: string
     steps:
       - checkout
@@ -145,37 +111,25 @@ jobs:
       - kubernetes/create-or-update-resource:
           get-rollout-status: true
           resource-file-path: deployment.yml
-          resource-name: deployment/capstone-rolling-update
-      - run:
-          command: |
-            kubectl get deployment capstone-rolling-update
-          name: Test cluster
-      - run:
-          command: |
-            kubectl get services capstone-rolling-update
-          name: Test cluster      
-
-
+          resource-name: deployment/uda-cap-deployment
+            
 workflows:
-  deployment:
+  default:
     jobs:
       - build
-      - create-small-cluster:
-          cluster-name: capstone-deployment
+      - create-cluster:
+          cluster-name: udacitycapstone
           requires:
             - build
       - test-cluster:
-          cluster-name: capstone-deployment
+          cluster-name: udacitycapstone
           requires:
-            - create-small-cluster
-      - build-push-docker:
+            - create-cluster
+      - create-upload-container:
           requires:
             - test-cluster
-      - service:
-          cluster-name: capstone-deployment
-          requires:
-            - create-small-cluster
       - deployment:
-          cluster-name: capstone-deployment
+          cluster-name: udacitycapstone
           requires:
-            - service
+            - test-cluster
+

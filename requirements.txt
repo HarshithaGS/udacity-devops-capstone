@@ -1,3 +1,2 @@
-Click
-Flask
 pylint
+flask

@@ -4,7 +4,7 @@
 
 # Step 1:
 # Build image and add a descriptive tag
-docker build --tag=capstone .
+docker build -t capstone .
 
 # Step 2: 
 # List docker images
@@ -14,3 +14,5 @@ docker image ls
 # Run flask app
 #docker run -it demokube bash
 docker run -p 8000:80 capstone 
+
+
