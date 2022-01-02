@@ -123,6 +123,7 @@ jobs:
             kubectl rollout status deployment.apps/cap-deploy
             kubectl get all
   
+  
 workflows:
   cicd-pipeline:
     jobs:
