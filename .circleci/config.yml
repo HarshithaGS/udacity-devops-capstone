@@ -47,24 +47,7 @@ jobs:
             . venv/bin/activate
             make lint
             
-  security_check:  
-    docker:
-      - image: python:3.7.3-stretch
-      
-    
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}
-            - v1-dependencies-
-       
-      - run:
-          name: Security scan
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            safety check
+
             
   create_and_publish_image:
     docker:
@@ -144,9 +127,6 @@ workflows:
   cicd-pipeline:
     jobs:
       - build
-      - security_check:
-          requires:
-            - build
       - create_and_publish_image:
           requires:
             - security_check
