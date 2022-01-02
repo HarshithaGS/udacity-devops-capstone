@@ -129,7 +129,7 @@ workflows:
       - build
       - create_and_publish_image:
           requires:
-            - security_check
+            - build
       - Infrastructure_and_Deployment:
           requires:
             - create_and_publish_image
