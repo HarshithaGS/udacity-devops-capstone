@@ -107,7 +107,7 @@ jobs:
       - run:
           name: Connect cluster
           command: |
-            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster 
+            aws eks --region us-east-1 update-kubeconfig --name capstone-cluster 
             kubectl get svc
       
       - run:
@@ -123,7 +123,7 @@ jobs:
             kubectl rollout status deployment.apps/cap-deploy
             kubectl get all
   
-  
+
 workflows:
   cicd-pipeline:
     jobs:
