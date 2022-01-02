@@ -1,20 +1,27 @@
 #!/usr/bin/env bash
 
 # This tags and uploads an image to Docker Hub
-
-# This is your Docker ID/path
-dockerpath=harshitha95/capstone
-echo "Dockerpath: ${dockerpath}"
+# Docker ID/path
+dockerpath=harshitha95/capstone-containter
 
 # Run the Docker Hub container with kubernetes
-kubectl run capstone \
-    --image=$dockerpath\
-    --port=80 --labels app=capstone
+kubectl run capstone-containter --image=harshitha95/capstone-containter
 
 # List kubernetes pods
 kubectl get pods
 
 # Forward the container port to a host
-kubectl port-forward --address 0.0.0.0 capstone 8000:80
-# Log container outputs
-kubectl logs --follow capstone
+kubectl port-forward capstone-containter 8000:80
+
+# Create deployment
+kubectl apply -f deployment.yml
+
+# Create the service to make pods accessible
+kubectl apply -f service.yml
+
+# Get Container Name from current deployment
+kubectl get deployment capstone-containter 
+
+# Update Deployment - SHOULD WORK NOW
+# kubectl set image deployment/<Deployment-Name> <Container-Name>=<Container-Image> --record=true
+# kubectl set image deployment/my-first-deployment kubenginx=stacksimplify/kubenginx:2.0.0 --record=true
