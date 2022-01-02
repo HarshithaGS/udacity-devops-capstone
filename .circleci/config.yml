@@ -1,179 +1,155 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
 version: 2.1
-
-
 orbs:
-  kubernetes: circleci/kubernetes@0.4.0 
-  aws-eks: circleci/aws-eks@1.1.0
-
+  docker: circleci/docker@1.6.0
+  aws-eks: circleci/aws-eks@0.2.3
+  kubernetes: circleci/kubernetes@0.12.0
+  
 jobs:
-  # lint Dockerfile with hadolint
-  # lint index.html with htmlhint
   build:
     docker:
-      - image: python:3.7-alpine3.11
+      # specify the version you desire here
+      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
+      - image: python:3.7.3-stretch
+      
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
     steps:
       - checkout
-      - run: 
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+      - run:
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            # make install
+            make install
             # Install hadolint
-            wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64 &&\
-            chmod +x /bin/hadolint
-            apk add --update nodejs npm
-            apk add --update npm
-            # sudo apt update
-            # sudo apt upgrade
-            # sudo apt install nodejs
-            pip install --upgrade pip &&\
-            pip install nodejs
-            pip install npm
-            node -v
-            npm -v
-            npm install --save-dev htmlhint
-      - run: 
+            
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+        
+      # run lints!
+      - run:
           name: run lint
           command: |
-            # . venv/bin/activate
-            hadolint --ignore DL3003 --ignore DL3006 Dockerfile
-            #make lint
-            npx htmlhint "index.html"
+            . venv/bin/activate
+            make lint
             
-# test EKS cluster
-  test-cluster:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          Name of the EKS cluster
-        type: string
+  security_check:  
+    docker:
+      - image: python:3.7.3-stretch
+      
+    
     steps:
-      - kubernetes/install
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+       
       - run:
+          name: Security scan
           command: |
-            kubectl get services
-          name: Test cluster
+            python3 -m venv venv
+            . venv/bin/activate
+            safety check
+            
+  create_and_publish_image:
+    docker:
+      - image: python:3.7.3-stretch
+      
+    
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            
+      - setup_remote_docker:
+          version: 20.10.2
           
-  # build docker image 
-  build-push-docker:
-    machine: true
-    steps:
-      - checkout
       - run:
-          name: build docker container
-          no_output_timeout: 20m
+          name: Install Docker
           command: |
-            ./run_docker.sh
+            apt-get update
+            apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+            add-apt-repository \
+            "deb [arch=amd64] https://download.docker.com/linux/debian \
+            $(lsb_release -cs) \
+            stable"
+            apt-get update
+            apt-get install -y docker-ce docker-ce-cli containerd.io
       - run:
-          name: upload docker container
-          no_output_timeout: 15m
+          name: Create and Publish image
           command: |
-            ./upload_docker.sh ${DOCKER_USERNAME} ${DOCKER_PASSWORD}
+            docker build --tag capstone .
+            docker image ls
+            dockerpath=harshitha95/capstone
+            echo "Docker ID and Image: $dockerpath"
+            docker login --username ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+            docker tag capstone $dockerpath
+            docker push $dockerpath
             
-  # create kubernetes cluster 
-  create-small-cluster:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          The name of the EKS cluster
-        type: string
+            
+  Infrastructure_and_Deployment:
+    docker:
+      - image: amazon/aws-cli    
     steps:
       - checkout
-      - aws-eks/install-aws-iam-authenticator:
-          release-tag: ''
-      - run:
-          name: Install the eksctl tool
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+      
+      - run: 
+          name: Install kubectl
           command: |
-            if which eksctl > /dev/null; then
-            echo "eksctl is already installed"
-            exit 0
-            fi
-            mkdir -p eksctl_download
-            curl --silent --location --retry 5 "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C eksctl_download
-            chmod +x eksctl_download/eksctl
-            SUDO=""
-            if [ $(id -u) -ne 0 ] && which sudo > /dev/null ; then
-            SUDO="sudo"
-            fi
-            $SUDO mv eksctl_download/eksctl /usr/local/bin/
-            rmdir eksctl_download
-      - aws-eks/create-cluster:
-          cluster-name: << parameters.cluster-name >>
-          skip-kubectl-install: false
-          verbose: 3
-          node-type: t2.small
-          nodes-max: 2
-          ssh-access: false
-          ssh-public-key: ''
-
-  # run service.yml to create load balancer 
-  service:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          The name of the EKS cluster
-        type: string
-    steps:
-      - checkout
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
-          install-kubectl: true
-      - kubernetes/create-or-update-resource:
-          resource-file-path: service.yml
-          resource-name: deployment/capstone-rolling-update
-
-  # run deployment.yml to create rolling update deployment
-  deployment:
-    executor: aws-eks/python3
-    parameters:
-      cluster-name:
-        description: |
-          The name of the EKS cluster
-        type: string
-    steps:
-      - checkout
-      - aws-eks/update-kubeconfig-with-authenticator:
-          cluster-name: << parameters.cluster-name >>
-          install-kubectl: true
-      - kubernetes/create-or-update-resource:
-          get-rollout-status: true
-          resource-file-path: deployment.yml
-          resource-name: deployment/capstone-rolling-update
+            yum install -y wget
+            wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+      
       - run:
+          name: Connect cluster
           command: |
-            kubectl get deployment capstone-rolling-update
-          name: Test cluster
+            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster 
+            kubectl get svc
+      
       - run:
+          name: Deploy cluster and update image
           command: |
-            kubectl get services capstone-rolling-update
-          name: Test cluster      
-
+            kubectl apply -f cap-deploy.yml 
+            kubectl get svc
+            kubectl get pods
+            
+      - run:
+          name: rollout deployment 
+          command: |
+            kubectl rollout status deployment.apps/cap-deploy
+            kubectl get all
+  
 workflows:
-  deployment:
+  cicd-pipeline:
     jobs:
       - build
-      - create-small-cluster:
-          cluster-name: capstone-deployment
+      - security_check:
           requires:
             - build
-      - test-cluster:
-          cluster-name: capstone-deployment
+      - create_and_publish_image:
           requires:
-            - create-small-cluster
-      - build-push-docker:
+            - security_check
+      - Infrastructure_and_Deployment:
           requires:
-            - test-cluster
-      - service:
-          cluster-name: capstone-deployment
-          requires:
-            - create-small-cluster
-      - deployment:
-          cluster-name: capstone-deployment
-          requires:
-            - service
+            - create_and_publish_image

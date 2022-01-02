@@ -3,19 +3,16 @@
 
 # Assumes that an image is built via `run_docker.sh`
 
-# Step 1:
 # Create dockerpath
-# dockerpath=<your docker ID/path>
 dockerpath=harshitha95/capstone
 
-# Step 2:  
+echo "Dockerpath: ${dockerpath}"
+
 # Authenticate & tag
 echo "Docker ID and Image: $dockerpath"
-#docker login --username sarastavaski
-docker login --username $1 --password $2
-docker tag capstone $dockerpath
-# fixed login
-# Step 3:
-# Push image to a docker repository
-docker push harshitha95/capstone
-#docker pull capstone-containter
+docker login --username "harshitha95" && \
+    docker image tag capstone $dockerpath
+
+
+# Push image to docker repository
+docker push $dockerpath

@@ -1,17 +1,12 @@
-"""
-  Main flask app module. Define routes and app configurations
-"""
-from flask import Flask, render_template
+from flask import Flask
 
 app = Flask(__name__)
 
-@app.route("/")
-def home_page():
-    """
-    home page html site
-    """
-    return render_template('index.html')
+# My Homepage
+@app.route('/')
+def hello():
+    return "<h2>Hello, Udacity! My name is Hrshitha, You are welcome to my Capstone project.<h2>"
 
+# Run on port 80
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)
-    

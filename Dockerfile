@@ -1,8 +1,20 @@
-FROM nginx
+# Instantiate from existing image.
+FROM python:3.7.3-stretch
 
-## Step 1:
-RUN rm /usr/share/nginx/html/index.html
+# Create working directory.
+WORKDIR /app
 
-## Step 2:
-# Copy source code to working directory
-COPY index.html /usr/share/nginx/html
+#badcode===
+# Copy source code to working directory. 
+COPY . app.py /app/
+
+# Install dependencies
+# hadolint ignore=DL3013
+RUN pip install --upgrade pip &&\
+	pip install --trusted-host pypi.python.org -r requirements.txt
+
+# Expose port 80
+EXPOSE 80
+
+# Run application at container launch
+CMD ["python", "app.py"]
