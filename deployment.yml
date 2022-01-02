@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: capstone-html-container
-        image: harshitha95/capstone-container
+        image: harshitha95/capstone-containter
         imagePullPolicy: "Always"
         ports:
         - containerPort: 80
