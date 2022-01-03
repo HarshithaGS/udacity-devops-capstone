@@ -21,7 +21,7 @@ spec:
         app: capstone
     spec:
       containers:
-        - image: 8762783629/capstone
+        - image: harshitha95/capstone
           imagePullPolicy: Always
           name: capstone
           ports:
