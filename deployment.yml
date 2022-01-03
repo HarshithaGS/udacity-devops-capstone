@@ -1,46 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: capstone-project
-    labels:
-        app: capstone-project
-    namespace: default
+  name: capstone
+  labels:
+    app: capstone
+  namespace: default
 spec:
-    replicas: 2
-    selector:
-        matchLabels:
-            app: capstone-project
-    strategy:
-        rollingUpdate:
-            maxUnavailable: 25%
-            maxSurge: 25%
-        type: RollingUpdate
-    template:
-        metadata:
-            labels:
-                app: capstone-project
-        spec:
-            containers:
-                - image: harshitha95/capstone-project
-                  imagePullPolicy: Always
-                  name: capstone-project
-                  ports:
-                      - containerPort: 80
-                        name: capstone
-                          
----
+  replicas: 2
+  progressDeadlineSeconds: 3600
+  selector:
+    matchLabels:
+      app: capstone
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: capstone
+    spec:
+      containers:
+        - image: harshitha95/capstone
+          imagePullPolicy: Always
+          name: capstone
+          ports:
+            - containerPort: 80
 
+---
 apiVersion: v1
 kind: Service
 metadata:
-    name: capstone-project
-    labels:
-        app: mycapstone
+  name: capstone
+  labels:
+    app: capstone
 spec:
-    selector:
-        app: capstone-project
-    type: LoadBalancer
-    ports:
-    - protocol: TCP
-      port: 80
+  type: LoadBalancer
+  selector:
+    app: capstone
+  ports:
+    - port: 8000
       targetPort: 80
+      protocol: TCP
