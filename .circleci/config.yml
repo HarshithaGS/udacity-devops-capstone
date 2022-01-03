@@ -95,6 +95,6 @@ workflows:
        - build-docker-image:
             requires: [lint-app]
        - create-deployment:
-            cluster-name: capstone
+            cluster-name: capstone-cluster
             requires:
               - build-docker-image
