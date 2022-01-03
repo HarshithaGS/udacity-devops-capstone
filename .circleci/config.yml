@@ -71,17 +71,18 @@ jobs:
             wget -O kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod +x ./kubectl
             mv ./kubectl /usr/local/bin/kubectl
-      - run:
-          name: Connect cluster
-          command: |
-            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster 
-            kubectl get svc
+
       - run:
           name: Deploy cluster and update image
           command: |
             kubectl apply -f deployment.yml 
             kubectl get svc
             kubectl get pods
+      - run:
+          name: Connect cluster
+          command: |
+            aws eks --region ${AWS_DEFAULT_REGION} update-kubeconfig --name capstone-cluster 
+            kubectl get svc
       - run:
           name: rollout deployment 
           command: |
