@@ -93,8 +93,8 @@ workflows:
     jobs:
        - lint-app
        - build-docker-image:
-            requires: [lint-app]
+            requires: 
+              - lint-app
        - create-deployment:
-            cluster-name: capstone-cluster
             requires:
               - build-docker-image
