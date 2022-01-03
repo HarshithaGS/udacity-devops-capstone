@@ -135,7 +135,7 @@ workflows:
           #creating and deploying cluster should be triggered via master branch only.
           filters:
             branches:
-              only: [master]
+              only: [main]
       - deploy-to-cluster:
           cluster-name: udacity-capstone
           requires: [create-cluster]
