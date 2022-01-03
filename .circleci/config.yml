@@ -148,3 +148,6 @@ workflows:
       - check-cluster:
           cluster-name: udacity-capstone
           requires: [aws-eks/update-container-image]
+
+
+          
