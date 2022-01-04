@@ -51,11 +51,11 @@ jobs:
   create-cluster:
     #create the kubernetes cluster
     executor: aws-eks/python3
-      parameters:
-        cluster-name:
-          description: |
-            EKS CLuster
-          type: string
+    parameters:
+      cluster-name:
+        description: |
+          EKS CLuster
+        type: string
     steps:
       - checkout
       - aws-eks/install-aws-iam-authenticator:
