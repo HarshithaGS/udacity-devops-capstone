@@ -10,3 +10,6 @@ This project demonstrates DevOps skills obtained from Cloud DevOps nanodegree pr
 3) Use Kubernetes (EKS) as a container orchestrator
 4) Deploy infrastracture using Infrastructure as code
 
+
+Link to github is https://github.com/HarshithaGS/udacity-devops-capstone
+
